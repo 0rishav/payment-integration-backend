@@ -1,6 +1,6 @@
-<<<<<<< HEAD
+
 # payment-integration-backend
-=======
+
 ## Prerequisites
 Make sure you have the following installed:
 
