@@ -35,3 +35,19 @@ export const isAuthenticated = CatchAsyncError(async (req, res, next) => {
     next();
   }
 });
+
+export const checkSubscriptionPlan = (requiredPlan) => {
+  return CatchAsyncError(async (req, res, next) => {
+      if (!req.user) {
+          return next(new ErrorHandler("Authentication required", 401));
+      }
+
+      const userPlan = req.user.subscription_plan;
+
+      if (userPlan === requiredPlan || (userPlan === "Advanced" && requiredPlan !== "Free")) {
+          next();
+      } else {
+          return next(new ErrorHandler("Access Denied: Insufficient plan", 403));
+      }
+  });
+};

@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser"
 import connectDB from "./utils/db.js"
 import userRouter from "./routes/user.js"
 import paymentRouter from "./routes/payment.js"
+import subscriptionRouter from "./routes/subscription.js"
+
 
 import { ErrorMiddleware } from "./middlewares/error.js"
 import { isAuthenticated } from "./middlewares/auth.js"
@@ -28,6 +30,7 @@ app.use(cors(corsOptions))
 
 app.use("/api/v1", userRouter);
 app.use("/api/v1",paymentRouter);
+app.use("/api/v1",subscriptionRouter)
 
 
 app.get("/test-route", isAuthenticated, (req,res)=>{

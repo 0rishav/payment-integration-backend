@@ -1,20 +1,6 @@
-
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const paymentSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, "Name is required"],
-  },
-  email: {
-    type: String,
-    required: [true, "Email is required"],
-    unique: true,
-  },
-  amount: {
-    type: Number,
-    required: true,
-  },
   razorpay_payment_id: {
     type: String,
     required: true,
@@ -29,13 +15,21 @@ const paymentSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    default: "Pending", 
+    required: true,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  user: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'User', 
+    required: true,
   },
+  amount: {
+    type: Number,
+    required: true,
+  },
+}, {
+  timestamps: true,
 });
 
-const Payment = mongoose.model("Payment", paymentSchema);
+const Payment = mongoose.model('Payment', paymentSchema);
+
 export default Payment;

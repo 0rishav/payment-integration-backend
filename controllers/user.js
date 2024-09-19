@@ -1,65 +1,67 @@
 import { CatchAsyncError } from "../middlewares/catchAsyncError.js";
 import UserModel from "../models/userModal.js";
 import ErrorHandler from "../utils/ErrorHandler.js";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 import ejs from "ejs";
 import path from "path";
 import { sendMail } from "../utils/sendMail.js";
-import { fileURLToPath } from 'url';
-import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/tokenConfiguration.js";
+import { fileURLToPath } from "url";
+import {
+  accessTokenOptions,
+  refreshTokenOptions,
+  sendToken,
+} from "../utils/tokenConfiguration.js";
 
 export const registrationUser = CatchAsyncError(async (req, res, next) => {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
+  try {
+    const { name, email, password } = req.body;
+    const isEmailExist = await UserModel.findOne({ email });
+
+    if (isEmailExist) {
+      return next(new ErrorHandler("Email Already Exists", 400));
+    }
+
+    const user = {
+      name,
+      email,
+      password,
+    };
+
+    const activationToken = createActivationToken(user);
+    const activationCode = activationToken.activationCode;
+    const data = { user: { name: user.name }, activationCode };
+    const html = await ejs.renderFile(
+      path.join(__dirname, "../mails/activation-mail.ejs"),
+      data
+    );
+
     try {
-      const { name, email, password } = req.body;
-      const isEmailExist = await UserModel.findOne({ email });
-      
-      if (isEmailExist) {
-        return next(new ErrorHandler('Email Already Exists', 400));
-      }
-  
-      const user = {
-        name,
-        email,
-        password,
-      };
-  
-      const activationToken = createActivationToken(user);
-      const activationCode = activationToken.activationCode;
-      const data = { user: { name: user.name }, activationCode };
-      const html = await ejs.renderFile(
-        path.join(__dirname, "../mails/activation-mail.ejs"),
-        data
-      );
-      
-  
-      try {
-        await sendMail({
-          email: user.email,
-          subject: 'Activate Your Account',
-          template: 'activation-mail.ejs',
-          data,
-        });
-        res.status(201).json({
-          success: true,
-          message: `Please check your email: ${user.email} to activate your account`,
-          activationToken: activationToken.token,
-        });
-      } catch (error) {
-        return next(new ErrorHandler(error.message, 400));
-      }
+      await sendMail({
+        email: user.email,
+        subject: "Activate Your Account",
+        template: "activation-mail.ejs",
+        data,
+      });
+      res.status(201).json({
+        success: true,
+        message: `Please check your email: ${user.email} to activate your account`,
+        activationToken: activationToken.token,
+      });
     } catch (error) {
       return next(new ErrorHandler(error.message, 400));
     }
-  });
-
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
 
 export const createActivationToken = (user) => {
   const activationCode = Math.floor(1000 + Math.random() * 9000).toString();
   const token = jwt.sign(
     { user, activationCode },
-    process.env.ACTIVATION_SECRET, 
+    process.env.ACTIVATION_SECRET,
     {
       expiresIn: "5m",
     }
@@ -71,10 +73,7 @@ export const activateUser = CatchAsyncError(async (req, res, next) => {
   try {
     const { activation_token, activation_code } = req.body;
 
-    const newUser = jwt.verify(
-      activation_token,
-      process.env.ACTIVATION_SECRET
-    );
+    const newUser = jwt.verify(activation_token, process.env.ACTIVATION_SECRET);
 
     if (newUser.activationCode !== activation_code) {
       return next(new ErrorHandler("Invalid Activation Code", 400));
@@ -94,14 +93,13 @@ export const activateUser = CatchAsyncError(async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message:"User Registered Successfully",
-      user
+      message: "User Registered Successfully",
+      user,
     });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }
 });
-
 
 export const loginUser = CatchAsyncError(async (req, res, next) => {
   try {
@@ -157,7 +155,9 @@ export const updateAccessToken = CatchAsyncError(async (req, res, next) => {
     const user = await UserModel.findById(decoded.id);
 
     if (!user) {
-      return next(new ErrorHandler("Please login to access this resource", 400));
+      return next(
+        new ErrorHandler("Please login to access this resource", 400)
+      );
     }
 
     const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN, {
@@ -174,6 +174,22 @@ export const updateAccessToken = CatchAsyncError(async (req, res, next) => {
     res.cookie("refresh_token", refreshToken, refreshTokenOptions);
 
     return next();
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+export const authenticateMe = CatchAsyncError(async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+      return next(new ErrorHandler("User Not Found", 400));
+    }
+
+    res.json(user);
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }

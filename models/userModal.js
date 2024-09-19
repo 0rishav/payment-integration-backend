@@ -28,6 +28,12 @@ const userSchema = new mongoose.Schema({
         minlength: [6, "Password must be at least 6 characters"],
         select: false,
     },
+    subscription_plan: {
+        type: String,
+        enum: ["Free", "Intermediate", "Advanced"], 
+        default: "Free", 
+        required: true,
+    },
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

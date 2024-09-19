@@ -1,5 +1,5 @@
 import express from "express"
-import { activateUser, loginUser, logoutUser, registrationUser } from "../controllers/user.js";
+import { activateUser, authenticateMe, loginUser, logoutUser, registrationUser } from "../controllers/user.js";
 import { isAuthenticated } from "../middlewares/auth.js";
 
 const userRouter = express.Router();
@@ -11,5 +11,7 @@ userRouter.post("/activate-user",activateUser)
 userRouter.post("/login",loginUser)
 
 userRouter.get("/logout",logoutUser)
+
+userRouter.get("/me",isAuthenticated,authenticateMe)
 
 export default userRouter
