@@ -14,7 +14,7 @@ export const createPayment = CatchAsyncError(async (req, res, next) => {
   const { amount, subscription_plan } = req.body;
 
   try {
-    // Ensure subscription_plan is included correctly in the receipt
+    
     if (!subscription_plan) {
       return next(new ErrorHandler("Subscription plan is required", 400));
     }
@@ -28,7 +28,7 @@ export const createPayment = CatchAsyncError(async (req, res, next) => {
       receipt: receipt, // Embed subscription_plan in receipt
     };
 
-    // Create Razorpay order
+    
     const order = await razorpay.orders.create(options);
 
     if (!order) {
@@ -53,7 +53,7 @@ export const verifyPayment = CatchAsyncError(async (req, res, next) => {
     amount,
   } = req.body;
 
-  // Calculate expected signature
+
   const body = razorpay_order_id + "|" + razorpay_payment_id;
   const expectedSignature = crypto
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -65,14 +65,14 @@ export const verifyPayment = CatchAsyncError(async (req, res, next) => {
   }
 
   try {
-    // Find the original order using the order ID
+   
     const order = await razorpay.orders.fetch(razorpay_order_id);
 
-    // Extract subscription_plan from the receipt field
+    
     const receiptParts = order.receipt.split('_');
-    const subscription_plan = receiptParts[1]; // Extract subscription_plan from receipt
+    const subscription_plan = receiptParts[1]; 
 
-    // Create a new payment record
+   
     const payment = new Payment({
       amount,
       razorpay_payment_id,
@@ -84,10 +84,10 @@ export const verifyPayment = CatchAsyncError(async (req, res, next) => {
 
     await payment.save();
 
-    // Update user's subscription plan
+    
     await UserModel.findOneAndUpdate(
       { _id: req.user._id },
-      { subscription_plan }, // Update subscription_plan
+      { subscription_plan }, 
       { new: true }
     );
 
