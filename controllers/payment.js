@@ -19,13 +19,13 @@ export const createPayment = CatchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Subscription plan is required", 400));
     }
 
-    // Create a unique receipt with subscription_plan and timestamp
+   
     const receipt = `receipt_${subscription_plan}_${Date.now()}`;
 
     const options = {
-      amount: amount * 100, // Amount in paise
+      amount: amount * 100,
       currency: "INR",
-      receipt: receipt, // Embed subscription_plan in receipt
+      receipt: receipt, 
     };
 
     
